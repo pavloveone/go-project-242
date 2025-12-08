@@ -30,6 +30,7 @@ func main() {
 	}
 	err := command.Run(context.Background(), os.Args)
 	if err != nil {
+		fmt.Println("ERROR:", err)
 		os.Exit(1)
 	}
 }
