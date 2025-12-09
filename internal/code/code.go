@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-func GetSize(path string) (string, error) {
+func GetSize(path string, flag bool) (string, error) {
 	fileInfo, err := os.Lstat(path)
 	if err != nil {
 		return "", err
@@ -29,5 +29,43 @@ func GetSize(path string) (string, error) {
 			size += info.Size()
 		}
 	}
-	return fmt.Sprintf("%d\t%s", size, path), nil
+	formated, err := FormatSize(size, flag)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s\t%s", formated, path), nil
+}
+
+func FormatSize(size int64, flag bool) (string, error) {
+	if size < 0 {
+		return "", fmt.Errorf("size must be < 0")
+	}
+	defRes := fmt.Sprintf("%dB", size)
+	if !flag {
+		return defRes, nil
+	}
+	type unit struct {
+		name  string
+		value int64
+	}
+	units := []unit{
+		{"B", 1},
+		{"KB", 1024},
+		{"MB", 1024 * 1024},
+		{"GB", 1024 * 1024 * 1024},
+		{"TB", 1024 * 1024 * 1024 * 1024},
+		{"PB", 1024 * 1024 * 1024 * 1024 * 1024},
+		{"EB", 1024 * 1024 * 1024 * 1024 * 1024 * 1024},
+	}
+	for i := len(units) - 1; i >= 0; i-- {
+		u := units[i]
+		if size >= u.value {
+			if u.name == "B" {
+				return defRes, nil
+			}
+			val := float64(size) / float64(u.value)
+			return fmt.Sprintf("%.1f%s", val, u.name), nil
+		}
+	}
+	return "0B", nil
 }
