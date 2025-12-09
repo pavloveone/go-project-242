@@ -30,3 +30,22 @@ func TestGetSize(t *testing.T) {
 	r.NoError(err)
 	r.Equal(fmt.Sprintf("9.5KB\t%s", fourth), res4)
 }
+
+func TestFormatSize(t *testing.T) {
+	r := require.New(t)
+	res1, err := FormatSize(1234567, true)
+	r.NoError(err)
+	r.Equal(res1, "1.2MB")
+
+	res2, err := FormatSize(123, true)
+	r.NoError(err)
+	r.Equal(res2, "123B")
+
+	res3, _ := FormatSize(-1, true)
+	r.NoError(err)
+	r.Equal(res3, "")
+
+	res4, err := FormatSize(25165824, false)
+	r.NoError(err)
+	r.Equal(res4, "25165824B")
+}
