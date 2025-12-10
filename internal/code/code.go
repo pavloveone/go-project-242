@@ -3,9 +3,10 @@ package code
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
-func GetSize(path string, flag bool) (string, error) {
+func GetSize(path string, human, all bool) (string, error) {
 	fileInfo, err := os.Lstat(path)
 	if err != nil {
 		return "", err
@@ -26,22 +27,25 @@ func GetSize(path string, flag bool) (string, error) {
 			if err != nil {
 				return "", err
 			}
+			if isHidden(info.Name(), all) {
+				continue
+			}
 			size += info.Size()
 		}
 	}
-	formated, err := FormatSize(size, flag)
+	formated, err := FormatSize(size, human)
 	if err != nil {
 		return "", err
 	}
 	return fmt.Sprintf("%s\t%s", formated, path), nil
 }
 
-func FormatSize(size int64, flag bool) (string, error) {
+func FormatSize(size int64, human bool) (string, error) {
 	if size < 0 {
 		return "", fmt.Errorf("size must be < 0")
 	}
 	defRes := fmt.Sprintf("%dB", size)
-	if !flag {
+	if !human {
 		return defRes, nil
 	}
 	type unit struct {
@@ -68,4 +72,8 @@ func FormatSize(size int64, flag bool) (string, error) {
 		}
 	}
 	return "0B", nil
+}
+
+func isHidden(name string, all bool) bool {
+	return strings.HasPrefix(name, ".") && !all
 }
