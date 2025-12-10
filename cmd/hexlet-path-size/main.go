@@ -10,20 +10,30 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-var flags = []cli.Flag{&cli.BoolFlag{
-	Name:    "human",
-	Aliases: []string{"H"},
-	Usage:   "human-readable size",
-}, &cli.BoolFlag{
-	Name:    "all",
-	Aliases: []string{"a"},
-	Usage:   "include hidden files and directories",
-}}
+var flags = []cli.Flag{
+	&cli.BoolFlag{
+		Name:        "recursive",
+		Aliases:     []string{"r"},
+		Usage:       "recursive size of directories",
+		DefaultText: "false",
+	},
+	&cli.BoolFlag{
+		Name:        "human",
+		Aliases:     []string{"H"},
+		Usage:       "human-readable size",
+		DefaultText: "false",
+	}, &cli.BoolFlag{
+		Name:        "all",
+		Aliases:     []string{"a"},
+		Usage:       "include hidden files and directories",
+		DefaultText: "false",
+	},
+}
 
 func main() {
 	command := &cli.Command{
 		Name:  "hexlet-path-size",
-		Usage: "print size of a file or directory",
+		Usage: "print size of a file or directory; supports -r (recursive), -H (human-readable), -a (include hidden)",
 		Flags: flags,
 		Action: func(ctx context.Context, c *cli.Command) error {
 			if c.Args().Len() == 0 {
@@ -31,9 +41,8 @@ func main() {
 			}
 
 			path := c.Args().First()
-			human := c.Bool("human")
-			all := c.Bool("all")
-			out, err := code.GetSize(path, human, all)
+			human, all, recursive := c.Bool("human"), c.Bool("all"), c.Bool("recursive")
+			out, err := code.GetSize(path, human, all, recursive)
 			if err != nil {
 				return err
 			}

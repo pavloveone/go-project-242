@@ -3,35 +3,14 @@ package code
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
-func GetSize(path string, human, all bool) (string, error) {
-	fileInfo, err := os.Lstat(path)
+func GetSize(path string, human, all, recursive bool) (string, error) {
+	size, err := calcSize(path, all, recursive)
 	if err != nil {
 		return "", err
-	}
-	var size int64
-	if !fileInfo.IsDir() {
-		size = fileInfo.Size()
-	} else {
-		entries, err := os.ReadDir(path)
-		if err != nil {
-			return "", err
-		}
-		for _, entry := range entries {
-			if entry.IsDir() {
-				continue
-			}
-			info, err := entry.Info()
-			if err != nil {
-				return "", err
-			}
-			if isHidden(info.Name(), all) {
-				continue
-			}
-			size += info.Size()
-		}
 	}
 	formated, err := FormatSize(size, human)
 	if err != nil {
@@ -76,4 +55,46 @@ func FormatSize(size int64, human bool) (string, error) {
 
 func isHidden(name string, all bool) bool {
 	return strings.HasPrefix(name, ".") && !all
+}
+
+func calcSize(path string, all, recursive bool) (int64, error) {
+	fileInfo, err := os.Lstat(path)
+	if err != nil {
+		return 0, err
+	}
+	if !fileInfo.IsDir() {
+		if isHidden(fileInfo.Name(), all) {
+			return 0, nil
+		}
+		return fileInfo.Size(), nil
+	}
+	var size int64
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return 0, err
+	}
+	for _, entry := range entries {
+		name := entry.Name()
+		if isHidden(name, all) {
+			continue
+		}
+		fullPath := filepath.Join(path, name)
+		if entry.IsDir() {
+			if !recursive {
+				continue
+			}
+			s, err := calcSize(fullPath, all, recursive)
+			if err != nil {
+				return 0, err
+			}
+			size += s
+			continue
+		}
+		info, err := entry.Info()
+		if err != nil {
+			return 0, err
+		}
+		size += info.Size()
+	}
+	return size, nil
 }

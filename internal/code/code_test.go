@@ -8,53 +8,76 @@ import (
 
 func TestGetSize(t *testing.T) {
 	tests := []struct {
-		name  string
-		path  string
-		human bool
-		all   bool
-		want  string
+		name      string
+		path      string
+		human     bool
+		all       bool
+		recursive bool
+		want      string
 	}{
 		{
-			name:  "regular file",
-			path:  "./testdata/file1.txt",
-			human: false,
-			all:   false,
-			want:  "9B\t./testdata/file1.txt",
+			name:      "regular file",
+			path:      "./testdata/file1.txt",
+			human:     false,
+			all:       false,
+			recursive: false,
+			want:      "9B\t./testdata/file1.txt",
 		},
 		{
-			name:  "directory",
-			path:  "./testdata/2",
-			human: false,
-			all:   false,
-			want:  "48B\t./testdata/2",
+			name:      "directory",
+			path:      "./testdata/2",
+			human:     false,
+			all:       false,
+			recursive: false,
+			want:      "48B\t./testdata/2",
 		},
 		{
-			name:  "nested file",
-			path:  "./testdata/2/file2.txt",
-			human: false,
-			all:   false,
-			want:  "24B\t./testdata/2/file2.txt",
+			name:      "nested file",
+			path:      "./testdata/2/file2.txt",
+			human:     false,
+			all:       false,
+			recursive: false,
+			want:      "24B\t./testdata/2/file2.txt",
 		},
 		{
-			name:  "human-readable",
-			path:  "./testdata/bigFile.txt",
-			human: true,
-			all:   false,
-			want:  "9.5KB\t./testdata/bigFile.txt",
+			name:      "human-readable",
+			path:      "./testdata/bigFile.txt",
+			human:     true,
+			all:       false,
+			recursive: false,
+			want:      "9.5KB\t./testdata/bigFile.txt",
 		},
 		{
-			name:  "hidden file excluded",
-			path:  "./testdata/.secret",
-			human: true,
-			all:   false,
-			want:  "0B\t./testdata/.secret",
+			name:      "hidden file excluded",
+			path:      "./testdata/.secret",
+			human:     true,
+			all:       false,
+			recursive: false,
+			want:      "0B\t./testdata/.secret",
 		},
 		{
-			name:  "hidden file included",
-			path:  "./testdata/.secret",
-			human: true,
-			all:   true,
-			want:  "200.0KB\t./testdata/.secret",
+			name:      "hidden file included",
+			path:      "./testdata/.secret",
+			human:     true,
+			all:       true,
+			recursive: false,
+			want:      "200.0KB\t./testdata/.secret",
+		},
+		{
+			name:      "recursion with exclusion of hidden files and directories",
+			path:      "./testdata/",
+			human:     true,
+			all:       false,
+			recursive: true,
+			want:      "342.9KB\t./testdata/",
+		},
+		{
+			name:      "recursion with inclusion of hidden files and directories",
+			path:      "./testdata/",
+			human:     true,
+			all:       true,
+			recursive: true,
+			want:      "609.5KB\t./testdata/",
 		},
 	}
 
@@ -62,7 +85,7 @@ func TestGetSize(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := require.New(t)
 
-			got, err := GetSize(tt.path, tt.human, tt.all)
+			got, err := GetSize(tt.path, tt.human, tt.all, tt.recursive)
 			r.NoError(err)
 			r.Equal(tt.want, got)
 		})
