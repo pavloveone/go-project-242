@@ -1,4 +1,4 @@
-module code
+module github.com/pavloveone/go-project-242
 
 go 1.23.1
 

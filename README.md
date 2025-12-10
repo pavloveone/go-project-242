@@ -3,4 +3,4 @@
 
 ### Demo
 
-[![asciinema demo](https://asciinema.org/a/aoqXlSOj0tKlRfGiWyi6pewTA.svg)](https://asciinema.org/a/aoqXlSOj0tKlRfGiWyi6pewTA)
+[![asciinema demo](https://asciinema.org/a/OzJ6nbBzAELX3F4Qntoy8eJ1y.svg)](https://asciinema.org/a/OzJ6nbBzAELX3F4Qntoy8eJ1y)

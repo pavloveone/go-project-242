@@ -1,12 +1,12 @@
 package main
 
 import (
-	"code/internal/code"
 	"context"
 	"fmt"
 
 	"os"
 
+	"github.com/pavloveone/go-project-242/pkg/code"
 	"github.com/urfave/cli/v3"
 )
 
