@@ -34,32 +34,42 @@ func GetPathSize(path string, human, all, recursive bool) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return formatSize(size, human), nil
+	formated, err := formatSize(size, human)
+	if err != nil {
+		return "", err
+	}
+	return formated, nil
 }
 
-func formatSize(size int64, human bool) string {
+func formatSize(size int64, human bool) (string, error) {
+	if size < 0 {
+		return "", fmt.Errorf("size must be < 0")
+	}
+	defRes := fmt.Sprintf("%dB", size)
 	if !human {
-		return fmt.Sprintf("%dB", size)
+		return defRes, nil
 	}
-
-	if size == 0 {
-		return "0B"
+	type unit struct {
+		name  string
+		value int64
 	}
-
-	units := []string{"B", "KB", "MB", "GB", "TB", "PB", "EB"}
-	unitIndex := 0
-	value := float64(size)
-
-	for value >= 1024 && unitIndex < len(units)-1 {
-		value /= 1024
-		unitIndex++
+	units := []unit{
+		{"B", 1},
+		{"KB", 1024},
+		{"MB", 1024 * 1024},
+		{"GB", 1024 * 1024 * 1024},
+		{"TB", 1024 * 1024 * 1024 * 1024},
+		{"PB", 1024 * 1024 * 1024 * 1024 * 1024},
+		{"EB", 1024 * 1024 * 1024 * 1024 * 1024 * 1024},
 	}
-
-	if unitIndex == 0 {
-		return fmt.Sprintf("%dB", size)
+	for i := len(units) - 1; i >= 0; i-- {
+		u := units[i]
+		if size >= u.value {
+			val := float64(size) / float64(u.value)
+			return fmt.Sprintf("%.1f%s", val, u.name), nil
+		}
 	}
-
-	return fmt.Sprintf("%.1f%s", value, units[unitIndex])
+	return "0B", nil
 }
 
 func isHidden(name string, all bool) bool {
@@ -67,61 +77,43 @@ func isHidden(name string, all bool) bool {
 }
 
 func calcSize(path string, all, recursive bool) (int64, error) {
-	info, err := os.Lstat(path)
+	fileInfo, err := os.Lstat(path)
 	if err != nil {
 		return 0, err
 	}
-
-	if !info.IsDir() {
-		if isHidden(info.Name(), all) {
+	if !fileInfo.IsDir() {
+		if isHidden(fileInfo.Name(), all) {
 			return 0, nil
 		}
-		return info.Size(), nil
+		return fileInfo.Size(), nil
 	}
-
-	var totalSize int64
-
-	err = filepath.Walk(path, func(currentPath string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if currentPath == path {
-			return nil
-		}
-
-		baseName := filepath.Base(currentPath)
-		if isHidden(baseName, all) {
-			if info.IsDir() {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-
-		if !recursive {
-			rel, err := filepath.Rel(path, currentPath)
-			if err != nil {
-				return err
-			}
-
-			if strings.Contains(rel, string(filepath.Separator)) {
-				if info.IsDir() {
-					return filepath.SkipDir
-				}
-				return nil
-			}
-		}
-
-		if !info.IsDir() {
-			totalSize += info.Size()
-		}
-
-		return nil
-	})
-
+	var size int64
+	entries, err := os.ReadDir(path)
 	if err != nil {
 		return 0, err
 	}
-
-	return totalSize, nil
+	for _, entry := range entries {
+		name := entry.Name()
+		if isHidden(name, all) {
+			continue
+		}
+		fullPath := filepath.Join(path, name)
+		if entry.IsDir() {
+			if !recursive {
+				continue
+			}
+			s, err := calcSize(fullPath, all, recursive)
+			if err != nil {
+				return 0, err
+			}
+			size += s
+			continue
+		}
+		info, err := entry.Info()
+		if err != nil {
+			return 0, err
+		}
+		size += info.Size()
+	}
+	return size, nil
 }
