@@ -98,25 +98,38 @@ func calcSize(path string, all, recursive bool) (int64, error) {
 	for _, entry := range entries {
 		name := entry.Name()
 		fullPath := filepath.Join(path, name)
-
 		if isHidden(name, all) {
 			continue
 		}
 		if !entry.IsDir() {
-			info, err := entry.Info()
+			entryInfo, err := entry.Info()
 			if err != nil {
 				return 0, err
 			}
-			size += info.Size()
+			size += entryInfo.Size()
 			continue
 		}
-
+		s, err := calcSize(fullPath, all, true)
+		if err != nil {
+			return 0, err
+		}
 		if recursive {
-			s, err := calcSize(fullPath, all, recursive)
+			size += s
+		} else {
+			subEntries, err := os.ReadDir(fullPath)
 			if err != nil {
 				return 0, err
 			}
-			size += s
+			for _, sub := range subEntries {
+				if isHidden(sub.Name(), all) || sub.IsDir() {
+					continue
+				}
+				subInfo, err := sub.Info()
+				if err != nil {
+					return 0, err
+				}
+				size += subInfo.Size()
+			}
 		}
 	}
 	return size, nil
