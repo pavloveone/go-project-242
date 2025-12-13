@@ -43,36 +43,36 @@ func GetPathSize(path string, human, all, recursive bool) (string, error) {
 
 func formatSize(size int64, human bool) (string, error) {
 	if size < 0 {
-		return "", fmt.Errorf("size must be < 0")
+		return "", fmt.Errorf("invalid size: size must be >= 0")
 	}
-	defRes := fmt.Sprintf("%dB", size)
+
 	if !human {
-		return defRes, nil
+		return fmt.Sprintf("%dB", size), nil
 	}
-	type unit struct {
-		name  string
-		value int64
+
+	units := []string{"B", "KB", "MB", "GB", "TB", "PB", "EB"}
+
+	if size == 0 {
+		return "0B", nil
 	}
-	units := []unit{
-		{"B", 1},
-		{"KB", 1024},
-		{"MB", 1024 * 1024},
-		{"GB", 1024 * 1024 * 1024},
-		{"TB", 1024 * 1024 * 1024 * 1024},
-		{"PB", 1024 * 1024 * 1024 * 1024 * 1024},
-		{"EB", 1024 * 1024 * 1024 * 1024 * 1024 * 1024},
+
+	var unitIndex int
+	value := float64(size)
+
+	for value >= 1024 && unitIndex < len(units)-1 {
+		value /= 1024
+		unitIndex++
 	}
-	for i := len(units) - 1; i >= 0; i-- {
-		u := units[i]
-		if size >= u.value {
-			if u.name == "B" {
-				return defRes, nil
-			}
-			val := float64(size) / float64(u.value)
-			return fmt.Sprintf("%.1f%s", val, u.name), nil
-		}
+
+	if unitIndex == 0 {
+		return fmt.Sprintf("%dB", size), nil
 	}
-	return "0B", nil
+	formatted := fmt.Sprintf("%.1f%s", value, units[unitIndex])
+	if strings.HasSuffix(formatted, ".0") {
+		formatted = formatted[:len(formatted)-2] + units[unitIndex]
+	}
+
+	return formatted, nil
 }
 
 func isHidden(name string, all bool) bool {
@@ -90,32 +90,37 @@ func calcSize(path string, all, recursive bool) (int64, error) {
 		}
 		return info.Size(), nil
 	}
-	var size int64
+	var totalSize int64
+
 	entries, err := os.ReadDir(path)
 	if err != nil {
 		return 0, err
 	}
+
 	for _, entry := range entries {
-		name := entry.Name()
-		fullPath := filepath.Join(path, name)
-		if isHidden(name, all) {
+		entryName := entry.Name()
+		if isHidden(entryName, all) {
 			continue
 		}
+
+		fullPath := filepath.Join(path, entryName)
+
 		if entry.IsDir() {
 			if recursive {
-				s, err := calcSize(fullPath, all, recursive)
+				dirSize, err := calcSize(fullPath, all, recursive)
 				if err != nil {
 					return 0, err
 				}
-				size += s
+				totalSize += dirSize
 			}
 			continue
 		}
-		info, err := entry.Info()
+		fileInfo, err := entry.Info()
 		if err != nil {
 			return 0, err
 		}
-		size += info.Size()
+		totalSize += fileInfo.Size()
 	}
-	return size, nil
+
+	return totalSize, nil
 }
