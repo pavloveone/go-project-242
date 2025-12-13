@@ -1,4 +1,4 @@
-package code
+package path_size
 
 import (
 	"fmt"
@@ -7,19 +7,19 @@ import (
 	"strings"
 )
 
-func GetSize(path string, human, all, recursive bool) (string, error) {
+func GetPathSize(path string, human, all, recursive bool) (string, error) {
 	size, err := calcSize(path, all, recursive)
 	if err != nil {
 		return "", err
 	}
-	formated, err := FormatSize(size, human)
+	formated, err := formatSize(size, human)
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%s\t%s", formated, path), nil
+	return formated, nil
 }
 
-func FormatSize(size int64, human bool) (string, error) {
+func formatSize(size int64, human bool) (string, error) {
 	if size < 0 {
 		return "", fmt.Errorf("size must be < 0")
 	}

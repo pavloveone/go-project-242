@@ -1,4 +1,4 @@
-package code
+package path_size
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetSize(t *testing.T) {
+func TestGetPathSize(t *testing.T) {
 	tests := []struct {
 		name      string
 		path      string
@@ -21,7 +21,7 @@ func TestGetSize(t *testing.T) {
 			human:     false,
 			all:       false,
 			recursive: false,
-			want:      "9B\t./testdata/file1.txt",
+			want:      "9B",
 		},
 		{
 			name:      "directory",
@@ -29,7 +29,7 @@ func TestGetSize(t *testing.T) {
 			human:     false,
 			all:       false,
 			recursive: false,
-			want:      "48B\t./testdata/2",
+			want:      "48B",
 		},
 		{
 			name:      "nested file",
@@ -37,7 +37,7 @@ func TestGetSize(t *testing.T) {
 			human:     false,
 			all:       false,
 			recursive: false,
-			want:      "24B\t./testdata/2/file2.txt",
+			want:      "24B",
 		},
 		{
 			name:      "human-readable",
@@ -45,7 +45,7 @@ func TestGetSize(t *testing.T) {
 			human:     true,
 			all:       false,
 			recursive: false,
-			want:      "9.5KB\t./testdata/bigFile.txt",
+			want:      "9.5KB",
 		},
 		{
 			name:      "hidden file excluded",
@@ -53,7 +53,7 @@ func TestGetSize(t *testing.T) {
 			human:     true,
 			all:       false,
 			recursive: false,
-			want:      "0B\t./testdata/.secret",
+			want:      "0B",
 		},
 		{
 			name:      "hidden file included",
@@ -61,7 +61,7 @@ func TestGetSize(t *testing.T) {
 			human:     true,
 			all:       true,
 			recursive: false,
-			want:      "200.0KB\t./testdata/.secret",
+			want:      "200.0KB",
 		},
 		{
 			name:      "recursion with exclusion of hidden files and directories",
@@ -69,7 +69,7 @@ func TestGetSize(t *testing.T) {
 			human:     true,
 			all:       false,
 			recursive: true,
-			want:      "342.9KB\t./testdata/",
+			want:      "342.9KB",
 		},
 		{
 			name:      "recursion with inclusion of hidden files and directories",
@@ -77,7 +77,7 @@ func TestGetSize(t *testing.T) {
 			human:     true,
 			all:       true,
 			recursive: true,
-			want:      "609.5KB\t./testdata/",
+			want:      "609.5KB",
 		},
 	}
 
@@ -85,54 +85,7 @@ func TestGetSize(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := require.New(t)
 
-			got, err := GetSize(tt.path, tt.human, tt.all, tt.recursive)
-			r.NoError(err)
-			r.Equal(tt.want, got)
-		})
-	}
-}
-
-func TestFormatSize(t *testing.T) {
-	tests := []struct {
-		name  string
-		size  int64
-		human bool
-		want  string
-		err   bool
-	}{
-		{
-			name:  "human bytes",
-			size:  123,
-			human: true,
-			want:  "123B",
-		}, {
-			name:  "human MB",
-			size:  25165824,
-			human: true,
-			want:  "24.0MB",
-		},
-		{
-			name:  "negative size",
-			size:  -1,
-			human: true,
-			err:   true,
-		},
-		{
-			name:  "raw bytes",
-			size:  25165824,
-			human: false,
-			want:  "25165824B",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			r := require.New(t)
-			got, err := FormatSize(tt.size, tt.human)
-			if tt.err {
-				r.Error(err)
-				return
-			}
+			got, err := GetPathSize(tt.path, tt.human, tt.all, tt.recursive)
 			r.NoError(err)
 			r.Equal(tt.want, got)
 		})
