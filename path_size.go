@@ -34,29 +34,20 @@ func GetPathSize(path string, human, all, recursive bool) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	formated, err := formatSize(size, human)
-	if err != nil {
-		return "", err
-	}
-	return formated, nil
+	return formatSize(size, human), nil
 }
 
-func formatSize(size int64, human bool) (string, error) {
-	if size < 0 {
-		return "", fmt.Errorf("invalid size: size must be >= 0")
+func formatSize(size int64, human bool) string {
+	if !human {
+		return fmt.Sprintf("%dB", size)
 	}
 
-	if !human {
-		return fmt.Sprintf("%dB", size), nil
+	if size == 0 {
+		return "0B"
 	}
 
 	units := []string{"B", "KB", "MB", "GB", "TB", "PB", "EB"}
-
-	if size == 0 {
-		return "0B", nil
-	}
-
-	var unitIndex int
+	unitIndex := 0
 	value := float64(size)
 
 	for value >= 1024 && unitIndex < len(units)-1 {
@@ -65,14 +56,10 @@ func formatSize(size int64, human bool) (string, error) {
 	}
 
 	if unitIndex == 0 {
-		return fmt.Sprintf("%dB", size), nil
-	}
-	formatted := fmt.Sprintf("%.1f%s", value, units[unitIndex])
-	if strings.HasSuffix(formatted, ".0") {
-		formatted = formatted[:len(formatted)-2] + units[unitIndex]
+		return fmt.Sprintf("%dB", size)
 	}
 
-	return formatted, nil
+	return fmt.Sprintf("%.1f%s", value, units[unitIndex])
 }
 
 func isHidden(name string, all bool) bool {
@@ -84,42 +71,56 @@ func calcSize(path string, all, recursive bool) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+
 	if !info.IsDir() {
 		if isHidden(info.Name(), all) {
 			return 0, nil
 		}
 		return info.Size(), nil
 	}
+
 	var totalSize int64
 
-	entries, err := os.ReadDir(path)
+	err = filepath.Walk(path, func(currentPath string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if currentPath == path {
+			return nil
+		}
+
+		baseName := filepath.Base(currentPath)
+		if isHidden(baseName, all) {
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		if !recursive {
+			rel, err := filepath.Rel(path, currentPath)
+			if err != nil {
+				return err
+			}
+
+			if strings.Contains(rel, string(filepath.Separator)) {
+				if info.IsDir() {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+		}
+
+		if !info.IsDir() {
+			totalSize += info.Size()
+		}
+
+		return nil
+	})
+
 	if err != nil {
 		return 0, err
-	}
-
-	for _, entry := range entries {
-		entryName := entry.Name()
-		if isHidden(entryName, all) {
-			continue
-		}
-
-		fullPath := filepath.Join(path, entryName)
-
-		if entry.IsDir() {
-			if recursive {
-				dirSize, err := calcSize(fullPath, all, recursive)
-				if err != nil {
-					return 0, err
-				}
-				totalSize += dirSize
-			}
-			continue
-		}
-		fileInfo, err := entry.Info()
-		if err != nil {
-			return 0, err
-		}
-		totalSize += fileInfo.Size()
 	}
 
 	return totalSize, nil
