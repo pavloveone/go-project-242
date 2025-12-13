@@ -80,15 +80,15 @@ func isHidden(name string, all bool) bool {
 }
 
 func calcSize(path string, all, recursive bool) (int64, error) {
-	fileInfo, err := os.Lstat(path)
+	info, err := os.Lstat(path)
 	if err != nil {
 		return 0, err
 	}
-	if !fileInfo.IsDir() {
-		if isHidden(fileInfo.Name(), all) {
+	if !info.IsDir() {
+		if isHidden(info.Name(), all) {
 			return 0, nil
 		}
-		return fileInfo.Size(), nil
+		return info.Size(), nil
 	}
 	var size int64
 	entries, err := os.ReadDir(path)
@@ -99,10 +99,10 @@ func calcSize(path string, all, recursive bool) (int64, error) {
 		name := entry.Name()
 		fullPath := filepath.Join(path, name)
 
+		if isHidden(name, all) {
+			continue
+		}
 		if !entry.IsDir() {
-			if isHidden(name, all) {
-				continue
-			}
 			info, err := entry.Info()
 			if err != nil {
 				return 0, err
@@ -111,19 +111,13 @@ func calcSize(path string, all, recursive bool) (int64, error) {
 			continue
 		}
 
-		if !recursive {
-			continue
+		if recursive {
+			s, err := calcSize(fullPath, all, recursive)
+			if err != nil {
+				return 0, err
+			}
+			size += s
 		}
-
-		if isHidden(name, all) {
-			continue
-		}
-
-		s, err := calcSize(fullPath, all, recursive)
-		if err != nil {
-			return 0, err
-		}
-		size += s
 	}
 	return size, nil
 }
