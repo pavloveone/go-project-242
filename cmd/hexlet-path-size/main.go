@@ -6,7 +6,7 @@ import (
 
 	"os"
 
-	code "github.com/pavloveone/go-project-242"
+	path_size "github.com/pavloveone/go-project-242"
 	"github.com/urfave/cli/v3"
 )
 
@@ -42,7 +42,7 @@ func main() {
 
 			path := c.Args().First()
 			human, all, recursive := c.Bool("human"), c.Bool("all"), c.Bool("recursive")
-			size, err := code.GetPathSize(path, human, all, recursive)
+			size, err := path_size.GetPathSize(path, human, all, recursive)
 			if err != nil {
 				return err
 			}
