@@ -73,7 +73,14 @@ func formatSize(size int64, human bool) (string, error) {
 }
 
 func isHidden(name string, all bool) bool {
-	return strings.HasPrefix(name, ".") && !all
+	if strings.HasPrefix(name, ".") && !all {
+		return true
+	}
+	switch name {
+	case ".DS_Store", "Thumbs.db":
+		return true
+	}
+	return false
 }
 
 func calcSize(path string, all, recursive bool) (int64, error) {

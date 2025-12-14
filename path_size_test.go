@@ -77,7 +77,7 @@ func TestGetPathSize(t *testing.T) {
 			human:     true,
 			all:       true,
 			recursive: true,
-			want:      "617.5KB",
+			want:      "611.5KB",
 		},
 	}
 
