@@ -65,6 +65,9 @@ func formatSize(size int64, human bool) (string, error) {
 	for i := len(units) - 1; i >= 0; i-- {
 		u := units[i]
 		if size >= u.value {
+			if u.name == "B" {
+				return defRes, nil
+			}
 			val := float64(size) / float64(u.value)
 			return fmt.Sprintf("%.1f%s", val, u.name), nil
 		}
