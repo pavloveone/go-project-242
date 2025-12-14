@@ -29,7 +29,7 @@ import (
 //   - строка с размером (например "123B", "1.5MB")
 //
 //   - ошибка, если путь не существует или призошла ошибка чтения
-func GetPathSize(path string, human, all, recursive bool) (string, error) {
+func GetPathSize(path string, recursive, human, all bool) (string, error) {
 	size, err := calcSize(path, all, recursive)
 	if err != nil {
 		return "", err

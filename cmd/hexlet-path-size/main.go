@@ -42,7 +42,7 @@ func main() {
 
 			path := c.Args().First()
 			human, all, recursive := c.Bool("human"), c.Bool("all"), c.Bool("recursive")
-			size, err := code.GetPathSize(path, human, all, recursive)
+			size, err := code.GetPathSize(path, recursive, human, all)
 			if err != nil {
 				return err
 			}
