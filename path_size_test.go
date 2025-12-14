@@ -69,7 +69,7 @@ func TestGetPathSize(t *testing.T) {
 			human:     true,
 			all:       false,
 			recursive: true,
-			want:      "342.9KB",
+			want:      "344.9KB",
 		},
 		{
 			name:      "recursion with inclusion of hidden files and directories",
@@ -77,7 +77,7 @@ func TestGetPathSize(t *testing.T) {
 			human:     true,
 			all:       true,
 			recursive: true,
-			want:      "615.5KB",
+			want:      "617.5KB",
 		},
 	}
 

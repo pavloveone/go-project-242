@@ -43,7 +43,7 @@ func GetPathSize(path string, human, all, recursive bool) (string, error) {
 
 func formatSize(size int64, human bool) (string, error) {
 	if size < 0 {
-		return "", fmt.Errorf("size must be < 0")
+		return "", fmt.Errorf("size must be >= 0")
 	}
 	defRes := fmt.Sprintf("%dB", size)
 	if !human {
